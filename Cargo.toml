@@ -1,0 +1,49 @@
+[package]
+name = "potato"
+version = "0.1.0"
+edition = "2021"
+authors = ["RealZai <zaibutcooler@icloud.com>"]
+description = "A secure, fast, and user-friendly CLI password manager"
+license = "MIT"
+repository = "https://github.com/realzai/potato"
+keywords = ["cli", "password-manager", "security", "encryption"]
+categories = ["command-line-utilities", "cryptography"]
+readme = "README.md"
+
+[dependencies]
+# CLI framework
+clap = { version = "4.4", features = ["derive", "env"] }
+
+# Encryption
+aes-gcm = "0.10"
+argon2 = "0.5"
+rand = "0.8"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Terminal utilities
+colored = "2.1"
+dialoguer = "0.11"
+rpassword = "7.3"
+
+# Clipboard
+copypasta = "0.10"
+
+# Directories
+dirs = "5.0"
+
+[dev-dependencies]
+tempfile = "3.10"
+assert_cmd = "2.0"
+predicates = "3.1"
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
