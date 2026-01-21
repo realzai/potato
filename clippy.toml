@@ -1,11 +1,3 @@
-[workspace]
-members = ["."]
-
-[workspace.lints.rust]
-unsafe_code = "forbid"
-
-[workspace.lints.clippy]
-all = "warn"
-pedantic = "warn"
-nursery = "warn"
+# Clippy configuration
+msrv = "1.70.0"
 

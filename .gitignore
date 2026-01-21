@@ -4,7 +4,7 @@ debug/
 release/
 
 # Cargo
-Cargo.lock
+# Cargo.lock - committed for binary crates for reproducible builds
 
 # IDE
 .idea/
