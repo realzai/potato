@@ -18,6 +18,26 @@ pub enum PotatoError {
     #[error("Entry '{0}' not found in vault.")]
     EntryNotFound(String),
 
+    /// Entry already exists in the vault.
+    #[error("Entry '{0}' already exists in vault.")]
+    EntryAlreadyExists(String),
+
+    /// Encryption error.
+    #[error("Encryption error: {0}")]
+    Encryption(String),
+
+    /// Decryption error.
+    #[error("Decryption error: {0}")]
+    Decryption(String),
+
+    /// Invalid master password.
+    #[error("Invalid master password. Please try again.")]
+    InvalidPassword,
+
+    /// Weak password error.
+    #[error("Weak password: {0}")]
+    WeakPassword(String),
+
     /// I/O error when reading/writing vault.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
