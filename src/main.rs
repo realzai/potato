@@ -30,7 +30,12 @@ fn main() -> Result<()> {
         Some(Commands::Remove { name, force }) => handle_remove(&name, force),
         Some(Commands::Generate { length, no_special }) => handle_generate(length, !no_special),
         None => {
-            println!("{}", "🥔 Welcome to Potato - Your secure password manager".green().bold());
+            println!(
+                "{}",
+                "🥔 Welcome to Potato - Your secure password manager"
+                    .green()
+                    .bold()
+            );
             println!("Run 'potato --help' for usage information.");
             Ok(())
         }
@@ -77,8 +82,15 @@ fn handle_init(force: bool) -> Result<()> {
 
     let vault_path = storage::get_vault_path()?;
     println!();
-    println!("{} Vault created at {}", "✓".green().bold(), vault_path.display());
-    println!("{}", "Keep your master password safe - it cannot be recovered!".yellow());
+    println!(
+        "{} Vault created at {}",
+        "✓".green().bold(),
+        vault_path.display()
+    );
+    println!(
+        "{}",
+        "Keep your master password safe - it cannot be recovered!".yellow()
+    );
 
     Ok(())
 }
@@ -115,10 +127,21 @@ fn handle_add(name: String, username: Option<String>, url: Option<String>) -> Re
     let notes = if notes.is_empty() { None } else { Some(notes) };
 
     // Add entry to vault
-    storage::add_entry(&master_password, name.clone(), username, password, url, notes)?;
+    storage::add_entry(
+        &master_password,
+        name.clone(),
+        username,
+        password,
+        url,
+        notes,
+    )?;
 
     println!();
-    println!("{} Entry '{}' added successfully", "✓".green().bold(), name.cyan());
+    println!(
+        "{} Entry '{}' added successfully",
+        "✓".green().bold(),
+        name.cyan()
+    );
 
     Ok(())
 }
@@ -146,7 +169,12 @@ fn handle_get(name: &str, copy: bool) -> Result<()> {
         match ClipboardContext::new() {
             Ok(mut ctx) => {
                 if ctx.set_contents(entry.password.clone()).is_ok() {
-                    println!("{}: {} {}", "Password".yellow(), "********".dimmed(), "(copied to clipboard)".green());
+                    println!(
+                        "{}: {} {}",
+                        "Password".yellow(),
+                        "********".dimmed(),
+                        "(copied to clipboard)".green()
+                    );
                     println!();
                     println!("{}", "Clipboard will be cleared in 30 seconds...".yellow());
 
@@ -199,7 +227,11 @@ fn handle_list(show_passwords: bool) -> Result<()> {
     }
 
     println!();
-    println!("{} {}", "Vault contains".cyan(), format!("{} entries:", entries.len()).cyan().bold());
+    println!(
+        "{} {}",
+        "Vault contains".cyan(),
+        format!("{} entries:", entries.len()).cyan().bold()
+    );
     println!();
 
     for entry in entries {
@@ -295,4 +327,3 @@ fn format_timestamp(timestamp: u64) -> String {
         Err(_) => "just now".to_string(),
     }
 }
-

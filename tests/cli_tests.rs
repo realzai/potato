@@ -35,4 +35,3 @@ fn cli_version_shows_version() {
         .success()
         .stdout(predicate::str::contains("potato"));
 }
-

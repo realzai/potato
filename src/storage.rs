@@ -8,8 +8,8 @@ use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
     Aes256Gcm, Nonce,
 };
-use argon2::{Argon2, PasswordHasher};
 use argon2::password_hash::{rand_core::RngCore, SaltString};
+use argon2::{Argon2, PasswordHasher};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{PotatoError, Result};
@@ -108,8 +108,8 @@ impl Vault {
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt the data
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|e| PotatoError::Encryption(e.to_string()))?;
+        let cipher =
+            Aes256Gcm::new_from_slice(&key).map_err(|e| PotatoError::Encryption(e.to_string()))?;
         let encrypted_data = cipher
             .encrypt(nonce, plaintext.as_ref())
             .map_err(|e| PotatoError::Encryption(e.to_string()))?;
@@ -132,9 +132,9 @@ impl Vault {
             .map_err(|e| PotatoError::Encryption(format!("Key derivation failed: {e}")))?;
 
         // Extract the hash as bytes (32 bytes for AES-256)
-        let hash = password_hash.hash.ok_or_else(|| {
-            PotatoError::Encryption("Password hash missing".to_string())
-        })?;
+        let hash = password_hash
+            .hash
+            .ok_or_else(|| PotatoError::Encryption("Password hash missing".to_string()))?;
 
         Ok(hash.as_bytes()[..32].to_vec())
     }
@@ -145,8 +145,8 @@ impl Vault {
         let key = Self::derive_key(master_password, &self.salt)?;
 
         // Create cipher
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|e| PotatoError::Decryption(e.to_string()))?;
+        let cipher =
+            Aes256Gcm::new_from_slice(&key).map_err(|e| PotatoError::Decryption(e.to_string()))?;
 
         // Decrypt the data
         let nonce = Nonce::from_slice(&self.nonce);
@@ -161,7 +161,11 @@ impl Vault {
     }
 
     /// Encrypts and updates the vault with new entries.
-    pub fn encrypt(&mut self, master_password: &str, entries: HashMap<String, Entry>) -> Result<()> {
+    pub fn encrypt(
+        &mut self,
+        master_password: &str,
+        entries: HashMap<String, Entry>,
+    ) -> Result<()> {
         // Create vault data
         let vault_data = VaultData { entries };
 
@@ -172,8 +176,8 @@ impl Vault {
         let key = Self::derive_key(master_password, &self.salt)?;
 
         // Create cipher
-        let cipher = Aes256Gcm::new_from_slice(&key)
-            .map_err(|e| PotatoError::Encryption(e.to_string()))?;
+        let cipher =
+            Aes256Gcm::new_from_slice(&key).map_err(|e| PotatoError::Encryption(e.to_string()))?;
 
         // Encrypt the data
         let nonce = Nonce::from_slice(&self.nonce);
@@ -427,13 +431,7 @@ mod tests {
 
     #[test]
     fn entry_touch_updates_modified_timestamp() {
-        let mut entry = Entry::new(
-            "test".to_string(),
-            None,
-            "password".to_string(),
-            None,
-            None,
-        );
+        let mut entry = Entry::new("test".to_string(), None, "password".to_string(), None, None);
 
         let original_modified = entry.modified_at;
 
@@ -483,7 +481,9 @@ mod tests {
         );
 
         // Encrypt the entries
-        vault.encrypt(password, entries.clone()).expect("Failed to encrypt");
+        vault
+            .encrypt(password, entries.clone())
+            .expect("Failed to encrypt");
 
         // Decrypt and verify
         let decrypted = vault.decrypt(password).expect("Failed to decrypt");
@@ -593,16 +593,12 @@ mod tests {
         let mut entries = HashMap::new();
         entries.insert(
             "test".to_string(),
-            Entry::new(
-                "test".to_string(),
-                None,
-                "password".to_string(),
-                None,
-                None,
-            ),
+            Entry::new("test".to_string(), None, "password".to_string(), None, None),
         );
 
-        let vault_data = VaultData { entries: entries.clone() };
+        let vault_data = VaultData {
+            entries: entries.clone(),
+        };
         let json = serde_json::to_string(&vault_data).expect("Failed to serialize");
         let deserialized: VaultData = serde_json::from_str(&json).expect("Failed to deserialize");
 
