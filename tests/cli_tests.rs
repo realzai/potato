@@ -2,11 +2,11 @@
 
 mod common;
 
-use assert_cmd::Command;
+use assert_cmd::{cargo::cargo_bin_cmd, Command};
 use predicates::prelude::*;
 
 fn potato() -> Command {
-    Command::cargo_bin("potato").unwrap()
+    cargo_bin_cmd!("potato")
 }
 
 #[test]

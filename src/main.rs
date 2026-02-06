@@ -24,11 +24,14 @@ fn main() -> Result<()> {
             name,
             username,
             url,
-        }) => handle_add(name, username, url),
+        }) => handle_add(&name, username, url),
         Some(Commands::Get { name, copy }) => handle_get(&name, copy),
         Some(Commands::List { show }) => handle_list(show),
         Some(Commands::Remove { name, force }) => handle_remove(&name, force),
-        Some(Commands::Generate { length, no_special }) => handle_generate(length, !no_special),
+        Some(Commands::Generate { length, no_special }) => {
+            handle_generate(length, !no_special);
+            Ok(())
+        }
         None => {
             println!(
                 "{}",
@@ -96,7 +99,7 @@ fn handle_init(force: bool) -> Result<()> {
 }
 
 /// Handles the add command to add a new entry.
-fn handle_add(name: String, username: Option<String>, url: Option<String>) -> Result<()> {
+fn handle_add(name: &str, username: Option<String>, url: Option<String>) -> Result<()> {
     // Get master password
     let master_password = rpassword::prompt_password("Master password: ")?;
 
@@ -129,7 +132,7 @@ fn handle_add(name: String, username: Option<String>, url: Option<String>) -> Re
     // Add entry to vault
     storage::add_entry(
         &master_password,
-        name.clone(),
+        name.to_string(),
         username,
         password,
         url,
@@ -166,34 +169,31 @@ fn handle_get(name: &str, copy: bool) -> Result<()> {
 
     if copy {
         // Copy to clipboard
-        match ClipboardContext::new() {
-            Ok(mut ctx) => {
-                if ctx.set_contents(entry.password.clone()).is_ok() {
-                    println!(
-                        "{}: {} {}",
-                        "Password".yellow(),
-                        "********".dimmed(),
-                        "(copied to clipboard)".green()
-                    );
-                    println!();
-                    println!("{}", "Clipboard will be cleared in 30 seconds...".yellow());
+        if let Ok(mut ctx) = ClipboardContext::new() {
+            if ctx.set_contents(entry.password.clone()).is_ok() {
+                println!(
+                    "{}: {} {}",
+                    "Password".yellow(),
+                    "********".dimmed(),
+                    "(copied to clipboard)".green()
+                );
+                println!();
+                println!("{}", "Clipboard will be cleared in 30 seconds...".yellow());
 
-                    // Clear clipboard after 30 seconds
-                    std::thread::spawn(move || {
-                        std::thread::sleep(std::time::Duration::from_secs(30));
-                        if let Ok(mut ctx) = ClipboardContext::new() {
-                            let _ = ctx.set_contents(String::new());
-                        }
-                    });
-                } else {
-                    println!("{}: {}", "Password".yellow(), entry.password);
-                    eprintln!("{}", "Warning: Failed to copy to clipboard".yellow());
-                }
-            }
-            Err(_) => {
+                // Clear clipboard after 30 seconds
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(30));
+                    if let Ok(mut ctx) = ClipboardContext::new() {
+                        let _ = ctx.set_contents(String::new());
+                    }
+                });
+            } else {
                 println!("{}: {}", "Password".yellow(), entry.password);
-                eprintln!("{}", "Warning: Clipboard not available".yellow());
+                eprintln!("{}", "Warning: Failed to copy to clipboard".yellow());
             }
+        } else {
+            println!("{}: {}", "Password".yellow(), entry.password);
+            eprintln!("{}", "Warning: Clipboard not available".yellow());
         }
     } else {
         println!("{}: {}", "Password".yellow(), entry.password);
@@ -266,7 +266,7 @@ fn handle_remove(name: &str, force: bool) -> Result<()> {
     // Confirm deletion unless force flag is used
     if !force {
         let confirm = Confirm::new()
-            .with_prompt(format!("Are you sure you want to delete '{}'?", name))
+            .with_prompt(format!("Are you sure you want to delete '{name}'?"))
             .default(false)
             .interact()?;
 
@@ -285,7 +285,7 @@ fn handle_remove(name: &str, force: bool) -> Result<()> {
 }
 
 /// Handles the generate command to create a random password.
-fn handle_generate(length: usize, include_special: bool) -> Result<()> {
+fn handle_generate(length: usize, include_special: bool) {
     let password = storage::generate_password(length, include_special);
 
     println!();
@@ -300,8 +300,6 @@ fn handle_generate(length: usize, include_special: bool) -> Result<()> {
             println!("{}", "✓ Copied to clipboard".green());
         }
     }
-
-    Ok(())
 }
 
 /// Formats a Unix timestamp into a human-readable string.
@@ -311,19 +309,22 @@ fn format_timestamp(timestamp: u64) -> String {
     let datetime = UNIX_EPOCH + Duration::from_secs(timestamp);
 
     // Simple formatting - in production you'd use chrono
-    match SystemTime::now().duration_since(datetime) {
-        Ok(duration) => {
+    SystemTime::now().duration_since(datetime).map_or_else(
+        |_| "just now".to_string(),
+        |duration| {
             let secs = duration.as_secs();
             if secs < 60 {
-                format!("{} seconds ago", secs)
+                format!("{secs} seconds ago")
             } else if secs < 3600 {
-                format!("{} minutes ago", secs / 60)
+                let minutes = secs / 60;
+                format!("{minutes} minutes ago")
             } else if secs < 86400 {
-                format!("{} hours ago", secs / 3600)
+                let hours = secs / 3600;
+                format!("{hours} hours ago")
             } else {
-                format!("{} days ago", secs / 86400)
+                let days = secs / 86400;
+                format!("{days} days ago")
             }
-        }
-        Err(_) => "just now".to_string(),
-    }
+        },
+    )
 }
